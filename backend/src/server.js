@@ -528,4 +528,6 @@ app.delete('/api/data/:id', verifyToken, (req, res) => {
 
 app.listen(PORT, () => {
   console.log(`后端服务器已启动，正在监听 http://localhost:${PORT}`);
+  //该行不能删除，前端程序依赖此行来判断后端是否启动成功
+  console.log('Backend started');
 });

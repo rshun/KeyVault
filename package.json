@@ -39,7 +39,7 @@
       }
     ],
     "win": {
-      "target": "portable",
+      "target": "zip",
       "verifyUpdateCodeSignature": false
     },
     "mac": {
