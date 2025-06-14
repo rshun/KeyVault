@@ -1,0 +1,52 @@
+{
+  "name": "keyvault-desktop",
+  "version": "1.0.0",
+  "description": "A secure password manager",
+  "main": "main.js",
+  "scripts": {
+    "frontend": "npm run dev --prefix frontend",
+    "backend": "node backend/src/server.js",
+    "start": "concurrently \"npm:backend\" \"wait-on http://localhost:3000 && electron .\"",
+    "dev": "concurrently \"npm:frontend\" \"npm:start\"",
+    "build:frontend": "npm run build --prefix frontend",
+    "preview": "npm run build:frontend && electron .",
+    "package": "npm run build:frontend && electron-builder"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "concurrently": "^8.2.2",
+    "electron": "^31.0.1",
+    "electron-builder": "^24.13.3",
+    "wait-on": "^7.2.0"
+  },
+  "build": {
+    "appId": "com.example.keyvault",
+    "productName": "KeyVault",
+    "files": [
+      "main.js",
+      "frontend/dist/**/*",
+      "backend/**/*"
+    ],
+    "extraResources": [
+      {
+        "from": "backend/",
+        "to": "app.asar.unpacked/backend",
+        "filter": [
+          "**/*"
+        ]
+      }
+    ],
+    "win": {
+      "target": "portable",
+      "verifyUpdateCodeSignature": false
+    },
+    "mac": {
+      "target": "dmg"
+    },
+    "portable": {
+      "unpackDirName": "KeyVault-data"
+    }
+  }
+}
