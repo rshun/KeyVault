@@ -12,9 +12,9 @@ const mainPassword = ref('');
 // 组件加载时执行的生命周期钩子
 onMounted(() => {
   // 检查浏览器中是否已保存登录凭据
-  const storedToken = localStorage.getItem('authToken');
-  const storedConfigPwd = localStorage.getItem('configPassword');
-  const storedMainPwd = localStorage.getItem('mainPassword');
+  const storedToken = sessionStorage.getItem('authToken');
+  const storedConfigPwd = sessionStorage.getItem('configPassword');
+  const storedMainPwd = sessionStorage.getItem('mainPassword');
 
   // 如果凭据都存在，则自动登录
   if (storedToken && storedConfigPwd && storedMainPwd) {
@@ -56,10 +56,10 @@ const fetchData = async (token) => {
 
 // 登录成功后的处理函数
 const handleLoginSuccess = (credentials) => {
-  // 1. 保存凭据到浏览器的 localStorage
-  localStorage.setItem('authToken', credentials.token);
-  localStorage.setItem('configPassword', credentials.configPassword);
-  localStorage.setItem('mainPassword', credentials.mainPassword);
+  // 1. 保存凭据到浏览器的 sessionStorage
+  sessionStorage.setItem('authToken', credentials.token);
+  sessionStorage.setItem('configPassword', credentials.configPassword);
+  sessionStorage.setItem('mainPassword', credentials.mainPassword);
 
   // 2. 更新组件状态
   authToken.value = credentials.token;
@@ -76,9 +76,9 @@ const handleLoginSuccess = (credentials) => {
 // 新增：登出函数
 const handleLogout = () => {
     // 1. 清除浏览器中保存的所有凭据
-    localStorage.removeItem('authToken');
-    localStorage.removeItem('configPassword');
-    localStorage.removeItem('mainPassword');
+    sessionStorage.removeItem('authToken');
+    sessionStorage.removeItem('configPassword');
+    sessionStorage.removeItem('mainPassword');
 
     // 2. 刷新页面，这将自动返回到登录页
     window.location.reload();
