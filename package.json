@@ -47,7 +47,6 @@
     },
     "portable": {
       "unpackDirName": "KeyVault-data"
-    },
-    "arch": "universal"
+    }
   }
 }
