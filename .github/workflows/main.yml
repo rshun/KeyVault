@@ -2,50 +2,46 @@
 
 name: Build macOS Universal App
 
-# Controls when the workflow will run
 on:
   push:
-    branches: [ "main" ] # Triggers the workflow on push events to the main branch
+    branches: [ "master" ]
   pull_request:
-    branches: [ "main" ] # Optional: Triggers the workflow on pull requests to the main branch
+    branches: [ "master" ]
 
-# A workflow run is made up of one or more jobs that can run sequentially or in parallel
 jobs:
   build:
-    # The type of runner that the job will run on
     runs-on: macos-latest
 
-    # Steps represent a sequence of tasks that will be executed as part of the job
     steps:
-      # 1. Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      # 2. Sets up Node.js environment
+      # 使用与 Electron v31 更匹配的 Node.js 版本 (v20)
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 18
+          node-version: 20
 
-      # 3. Install dependencies for the root, frontend, and backend
+      # 使用 npm ci 更快、更可靠地安装依赖
       - name: Install root dependencies
-        run: npm install
+        run: npm ci
 
       - name: Install frontend dependencies
-        run: npm install --prefix frontend
+        run: npm ci --prefix frontend
 
       - name: Install backend dependencies
-        run: npm install --prefix backend
+        run: npm ci --prefix backend
 
-      # 4. Run the build script defined in your package.json
+      # 【已修正】使用正确的打包命令 npm run package
       - name: Build and package macOS application
-        run: npm run package -- --mac universal
+        run: npm run package
         env:
-          # This is required by electron-builder for macOS builds
+          # 重要：macOS 构建需要代码签名。
+          # 您必须在 GitHub 仓库的 Secrets 中配置 CSC_LINK 和 CSC_KEY_PASSWORD。
+          # 如果暂时没有，请在 package.json 的 build.mac 中添加 "identity": null 以禁用签名进行测试。
           CSC_LINK: ${{ secrets.CSC_LINK }}
           CSC_KEY_PASSWORD: ${{ secrets.CSC_KEY_PASSWORD }}
 
-      # 5. Upload the generated DMG file as a build artifact
       - name: Upload macOS Artifact
         uses: actions/upload-artifact@v4
         with:
