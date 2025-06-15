@@ -7,6 +7,7 @@ const emit = defineEmits(['login-success']);
 const username = ref('');
 const profilePassword = ref('');
 const password = ref('');
+const errorMessage = ref(''); // 新增：用于显示错误或提示信息
 
 const isProfilePasswordVisible = ref(false);
 const isMainPasswordVisible = ref(false);
@@ -15,8 +16,10 @@ const toggleProfilePasswordVisibility = () => { isProfilePasswordVisible.value =
 const toggleMainPasswordVisibility = () => { isMainPasswordVisible.value = !isMainPasswordVisible.value; };
 
 const handleRegister = async () => {
+  errorMessage.value = ''; // 每次操作前清空旧消息
   if (!username.value || !profilePassword.value || !password.value) {
-    alert('为了完成注册和自动登录，所有输入框都必须填写！');
+    // 改动：不再使用 alert，而是设置错误消息
+    errorMessage.value = '为了完成注册和自动登录，所有输入框都必须填写！';
     return;
   }
   const requestBody = {
@@ -30,20 +33,28 @@ const handleRegister = async () => {
       body: JSON.stringify(requestBody),
     });
     const data = await response.json();
-    alert(data.message);
     if (response.ok && data.success) {
       console.log('注册成功，将自动登录...');
+      // 可以选择显示一个成功消息
+      errorMessage.value = data.message + ' 即将自动登录...';
       await handleLogin();
+    } else {
+      // 改动：显示来自服务器的错误
+      errorMessage.value = data.message;
     }
   } catch (error) {
     console.error('注册请求失败:', error);
-    alert('无法连接到服务器进行注册。');
+    errorMessage.value = '无法连接到服务器进行注册。';
   }
 };
 
 const handleLogin = async () => {
+  // 如果不是由注册流程调用的，则清空消息
+  if (errorMessage.value === '') {
+     errorMessage.value = '';
+  }
   if (!username.value || !profilePassword.value || !password.value) {
-    alert('所有密码框都必须填写！');
+    errorMessage.value = '所有密码框都必须填写！';
     return;
   }
   const loginRequestBody = { username: username.value, configPassword: profilePassword.value };
@@ -61,10 +72,11 @@ const handleLogin = async () => {
         mainPassword: password.value
       });
     } else {
-      alert(loginData.message || '登录失败，请检查您的凭据。');
+      // 改动：显示登录失败消息
+      errorMessage.value = loginData.message || '登录失败，请检查您的凭据。';
     }
   } catch (error) {
-    alert('无法连接到服务器');
+    errorMessage.value = '无法连接到服务器。';
   }
 };
 </script>
@@ -87,6 +99,11 @@ const handleLogin = async () => {
                 <p>请输入您的凭据以继续</p>
                 </div>
                 <form class="login-form" @submit.prevent="handleLogin">
+                
+                <div v-if="errorMessage" class="error-message">
+                    {{ errorMessage }}
+                </div>
+
                 <div class="input-group">
                     <label for="username">用户名</label>
                     <input ref="usernameInput" type="text" id="username" name="username" v-model="username" required>
@@ -132,7 +149,19 @@ const handleLogin = async () => {
 </template>
 
 <style scoped>
-/* 样式保持不变 */
+/* 新增：错误消息样式 */
+.error-message {
+  color: #842029;
+  background-color: #f8d7da;
+  border-color: #f5c2c7;
+  padding: 1rem;
+  margin-bottom: 1.5rem;
+  border: 1px solid transparent;
+  border-radius: .25rem;
+  text-align: center;
+  font-size: 14px;
+}
+
 .login-container {
   display: flex;
   width: 100vw;
@@ -157,7 +186,6 @@ const handleLogin = async () => {
   justify-content: center;
   align-items: center;
   padding: 40px;
-  overflow-y: auto;
 }
 .login-form-wrapper { max-width: 400px; width: 100%; }
 .form-header { text-align: center; margin-bottom: 2.5rem; }

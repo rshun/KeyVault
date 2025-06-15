@@ -16,6 +16,7 @@ function createWindow() {
   mainWindow = new BrowserWindow({
     width: 1200,
     height: 800,
+    center: true, // 使窗口在屏幕中央显示
     frame: false,
     titleBarStyle: 'hidden',
     titleBarOverlay: {
@@ -29,7 +30,7 @@ function createWindow() {
     },
   });
 
-  mainWindow.maximize();
+  // mainWindow.maximize(); // 已注释此行以取消全屏
   mainWindow.setMenu(null);
 
   const isDev = process.env.DEV_MODE === 'true';

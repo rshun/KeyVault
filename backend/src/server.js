@@ -371,10 +371,21 @@ app.post('/api/data', verifyToken, (req, res) => {
                 Memo: decrypt(item.memo, configPassword),
                 webIcon: decrypt(item.web_icon, configPassword),
             }));
+
+            // ** START: CORE CHANGE FOR SORTING **
+            // 按 webName 属性对解密后的数组进行字母排序 (A-Z)
+            decryptedRows.sort((a, b) => {
+                const nameA = a.webName || '';
+                const nameB = b.webName || '';
+                return nameA.localeCompare(nameB);
+            });
+            // ** END: CORE CHANGE **
+            
             const finalData = decryptedRows.map(item => ({
                 ...item,
                 password: generatePasswordWrapper(item, mainPassword)
             }));
+
             res.json({ success: true, data: finalData });
         } catch (error) {
             console.error("解密或密码生成失败:", error.message);
