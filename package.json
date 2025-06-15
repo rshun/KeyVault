@@ -43,7 +43,8 @@
       "verifyUpdateCodeSignature": false
     },
     "mac": {
-      "target": "dmg"
+      "target": "dmg",
+      "identity": null
     },
     "portable": {
       "unpackDirName": "KeyVault-data"
