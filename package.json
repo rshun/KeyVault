@@ -10,6 +10,7 @@
     "dev": "concurrently \"npm:frontend\" \"npm:start\"",
     "build:frontend": "npm run build --prefix frontend",
     "preview": "npm run build:frontend && electron .",
+    "build": "npm run build:frontend && electron-builder --dir",
     "package": "npm run build:frontend && electron-builder"
   },
   "keywords": [],
@@ -43,7 +44,11 @@
       "verifyUpdateCodeSignature": false
     },
     "mac": {
-      "target": "dmg"
+      "target": "dmg",
+      "arch": [
+        "x64",
+        "arm64"
+      ]
     },
     "portable": {
       "unpackDirName": "KeyVault-data"
