@@ -24,6 +24,7 @@
   "build": {
     "appId": "com.example.keyvault",
     "productName": "KeyVault",
+    "publish": null,
     "files": [
       "main.js",
       "frontend/dist/**/*",
