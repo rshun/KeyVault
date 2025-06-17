@@ -1,4 +1,4 @@
-const { app, BrowserWindow, shell } = require('electron');
+const { app, BrowserWindow, shell, ipcMain, dialog } = require('electron');
 const path = require('path');
 const { spawn } = require('child_process');
 
@@ -25,6 +25,8 @@ function createWindow() {
       height: 40
     },
     webPreferences: {
+      // **修改点 1：指定预加载脚本的路径**
+      preload: path.join(__dirname, 'preload.js'),
       nodeIntegration: false,
       contextIsolation: true,
     },
@@ -107,6 +109,26 @@ app.whenReady().then(async () => {
     if (BrowserWindow.getAllWindows().length === 0) createWindow();
   });
 });
+
+// **修改点 2：新增 IPC 监听器来处理文件对话框请求**
+ipcMain.handle('dialog:show-save-dialog', async () => {
+  const { canceled, filePath } = await dialog.showSaveDialog({
+    title: '选择数据库保存路径',
+    defaultPath: path.join(app.getPath('documents'), 'keyvault.db'),
+    buttonLabel: '保存',
+    filters: [
+      { name: '数据库文件', extensions: ['db'] },
+      { name: '所有文件', extensions: ['*'] }
+    ]
+  });
+
+  if (canceled) {
+    return ''; // 如果用户取消，返回空字符串
+  } else {
+    return filePath;
+  }
+});
+
 
 // 所有窗口关闭时退出（非 mac）
 app.on('window-all-closed', () => {
