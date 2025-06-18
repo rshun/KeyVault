@@ -96,10 +96,10 @@ const selectPath = async () => {
         </div>
         
         <div class="input-group horizontal-group">
-            <label for="reg-path">数据库文件路径</label>
+            <label for="reg-path"></label>
             <div class="path-selection-group">
-              <input id="reg-path" type="text" v-model="path" required readonly placeholder="点击右侧按钮选择...">
-              <button type="button" @click="selectPath" class="browse-button">选择路径</button>
+              <button type="button" @click="selectPath" class="browse-button">数据库文件路径</button>
+              <input id="reg-path" type="text" v-model="path" required readonly placeholder="点击左侧按钮选择...">
             </div>
         </div>
         
@@ -151,22 +151,30 @@ const selectPath = async () => {
   display: flex;
   align-items: center;
 }
+
+/* ***** 主要修改：调整输入框和按钮的边框圆角以适应新位置 ***** */
 .path-selection-group input {
   flex-grow: 1;
-  border-top-right-radius: 0;
-  border-bottom-right-radius: 0;
-  border-right: none;
+  border-top-left-radius: 0;
+  border-bottom-left-radius: 0;
+  /* 移除 border-right: none，因为现在它在右边 */
 }
 .browse-button {
   padding: 12px 15px;
   border: 1px solid #ccc;
   background-color: #f8f9fa;
   cursor: pointer;
-  border-top-right-radius: 8px;
-  border-bottom-right-radius: 8px;
+  /* 修改圆角，使其在左侧 */
+  border-top-left-radius: 8px;
+  border-bottom-left-radius: 8px;
+  border-top-right-radius: 0;
+  border-bottom-right-radius: 0;
+  /* 添加 border-right: none 以便和输入框连接 */
+  border-right: none;
   transition: background-color 0.2s;
   flex-shrink: 0;
 }
+
 .browse-button:hover {
   background-color: #e2e6ea;
 }

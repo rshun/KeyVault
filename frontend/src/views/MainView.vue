@@ -295,6 +295,14 @@ const deleteItem = async (item) => { // REFACTORED
         }
     }
 };
+
+const handleDeleteFromMenu = () => {
+    if (contextMenu.value.currentItem) {
+        deleteItem(contextMenu.value.currentItem);
+    }
+    contextMenu.value.show = false;
+};
+
 const onRightClick = (event, item) => {
     event.preventDefault();
     contextMenu.value = { show: true, x: event.clientX, y: event.clientY, currentItem: item };
@@ -377,15 +385,14 @@ const logout = async () => { // REFACTORED
             <th style="width: 7%;"><div class="th-content">特殊字符</div><div class="resize-handle" @mousedown="startResize"></div></th>
             <th style="width: 7%;"><div class="th-content">密钥类型</div><div class="resize-handle" @mousedown="startResize"></div></th>
             <th style="width: 7%;"><div class="th-content">更新次数</div><div class="resize-handle" @mousedown="startResize"></div></th>
-            <th style="width: 8%;"><div class="th-content">备注</div><div class="resize-handle" @mousedown="startResize"></div></th>
-            <th style="width: 6%;"><div class="th-content">操作</div></th>
+            <th style="width: 14%;"><div class="th-content">备注</div><div class="resize-handle" @mousedown="startResize"></div></th>
           </tr>
         </thead>
         <tbody>
           <tr v-if="filteredList.length === 0">
-            <td colspan="11" style="text-align: center;">没有可显示的数据。</td>
+            <td colspan="10" style="text-align: center;">没有可显示的数据。</td>
           </tr>
-          <tr v-for="item in filteredList" :key="item.id">
+          <tr v-for="item in filteredList" :key="item.id" @contextmenu.prevent="onRightClick($event, item)">
             <td @click="startEditing(item, 'webIcon', $event)">
                <input class="inline-edit-input" v-if="editingCell?.id === item.id && editingCell?.field === 'webIcon'" v-model="item.webIcon" @blur="stopEditing('webIcon', item)" @keydown.enter.prevent="stopEditing('webIcon', item)"/>
                <img v-else :src="item.webIcon" alt="icon" class="web-icon" onerror="this.style.display='none'">
@@ -406,7 +413,7 @@ const logout = async () => { // REFACTORED
                <input class="inline-edit-input" v-if="editingCell?.id === item.id && editingCell?.field === 'loginName'" v-model="item.loginName" @blur="stopEditing('loginName', item)" @keydown.enter.prevent="stopEditing('loginName', item)"/>
               <span v-else>{{ item.loginName }}</span>
             </td>
-            <td @click.stop="copyPasswordOnClick(item)" @contextmenu.prevent="onRightClick($event, item)" class="password-cell">
+            <td @click.stop="copyPasswordOnClick(item)" class="password-cell">
               {{ isPasswordVisible(item) ? item.password : '•••••' }}
             </td>
             <td @click="startEditing(item, 'passwordLength', $event)">
@@ -429,15 +436,14 @@ const logout = async () => { // REFACTORED
                <input class="inline-edit-input" v-if="editingCell?.id === item.id && editingCell?.field === 'Memo'" v-model="item.Memo" @blur="stopEditing('Memo', item)" @keydown.enter.prevent="stopEditing('Memo', item)"/>
               <span v-else>{{ item.Memo }}</span>
             </td>
-            <td>
-              <button @click="deleteItem(item)" class="delete-button">删除</button>
-            </td>
           </tr>
         </tbody>
       </table>
     </div>
     <div v-if="contextMenu.show" class="context-menu" :style="{ top: `${contextMenu.y}px`, left: `${contextMenu.x}px` }">
       <div class="context-menu-item" @click="showPassword">显示/隐藏密码</div>
+      <div class="context-menu-separator"></div>
+      <div class="context-menu-item danger" @click="handleDeleteFromMenu">删除此行</div>
     </div>
   </div>
 </template>
@@ -539,4 +545,18 @@ a:hover { text-decoration: underline; }
 .inline-edit-input { width: 100%; padding: 5px; border: 1px solid #007aff; border-radius: 3px; box-sizing: border-box; }
 .delete-button { border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer; transition: background-color 0.2s; background-color: #dc3545; color: white; margin-left: 5px; }
 .delete-button:hover { background-color: #c82333; }
+
+/* Styles for right-click context menu */
+.context-menu-separator {
+  height: 1px;
+  background-color: #eee;
+  margin: 4px 0;
+}
+.context-menu-item.danger {
+  color: #dc3545;
+}
+.context-menu-item.danger:hover {
+  background-color: #dc3545;
+  color: white;
+}
 </style>
