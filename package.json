@@ -27,6 +27,7 @@
     "publish": null,
     "files": [
       "main.js",
+      "preload.js",
       "frontend/dist/**/*",
       "backend/**/*"
     ],
@@ -40,11 +41,17 @@
       }
     ],
     "win": {
-      "target": "zip",
+      "target": "nsis",
+      "arch": [
+        "x64"
+      ],
       "verifyUpdateCodeSignature": false
     },
     "mac": {
       "target": "dmg",
+      "arch": [
+        "arm64"
+      ],
       "identity": null
     },
     "portable": {
