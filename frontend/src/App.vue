@@ -74,14 +74,23 @@ const handleLoginSuccess = (credentials) => {
 };
 
 // 新增：登出函数
+// App.vue
 const handleLogout = () => {
     // 1. 清除浏览器中保存的所有凭据
     sessionStorage.removeItem('authToken');
     sessionStorage.removeItem('configPassword');
     sessionStorage.removeItem('mainPassword');
 
-    // 2. 刷新页面，这将自动返回到登录页
-    window.location.reload();
+    // 2. 重置组件内部的所有状态
+    isLoggedIn.value = false;
+    authToken.value = '';
+    configPassword.value = '';
+    mainPassword.value = '';
+    userInfo.value = [];
+    
+    // 3. （可选，但推荐）通过 router 导航到登录页，确保URL也同步更新
+    // 如果您已经配置了路由守卫，当 isLoggedIn 变为 false 后，路由守卫也会自动处理跳转
+    // router.push({ name: 'login' }); // 如果需要的话，可以从 './router' 导入 router
 };
 </script>
 
