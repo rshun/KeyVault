@@ -1,6 +1,5 @@
 <script setup>
 import { ref, defineEmits } from 'vue';
-// 导入新的注册视图组件
 import RegisterView from './RegisterView.vue';
 
 const emit = defineEmits(['login-success']);
@@ -8,26 +7,33 @@ const emit = defineEmits(['login-success']);
 const username = ref('');
 const profilePassword = ref('');
 const password = ref('');
-const errorMessage = ref(''); 
+const message = ref(''); // 重命名，使其更通用
+const messageType = ref('error'); // 'success' 或 'error'
 
-// 新增：控制显示注册视图的状态
 const showRegisterView = ref(false);
-
 const isProfilePasswordVisible = ref(false);
 const isMainPasswordVisible = ref(false);
 
 const toggleProfilePasswordVisibility = () => { isProfilePasswordVisible.value = !isProfilePasswordVisible.value; };
 const toggleMainPasswordVisibility = () => { isMainPasswordVisible.value = !isMainPasswordVisible.value; };
 
-// 修改后的 handleRegister 函数，现在只用于切换到注册视图
 const handleRegisterClick = () => {
+  message.value = ''; // 切换视图时清空消息
   showRegisterView.value = true;
 };
 
+// 新增点1: 处理注册成功事件的函数
+const handleRegistrationSuccess = (successMessage) => {
+  messageType.value = 'success';
+  message.value = successMessage;
+  showRegisterView.value = false; // 返回登录视图
+};
+
 const handleLogin = async () => {
-  errorMessage.value = '';
+  message.value = '';
   if (!username.value || !profilePassword.value || !password.value) {
-    errorMessage.value = '所有密码框都必须填写！';
+    messageType.value = 'error';
+    message.value = '所有密码框都必须填写！';
     return;
   }
   const loginRequestBody = { username: username.value, configPassword: profilePassword.value };
@@ -39,17 +45,18 @@ const handleLogin = async () => {
     });
     const loginData = await loginResponse.json();
     if (loginResponse.ok && loginData.success) {
-      // 登录成功后，触发父组件的事件
       emit('login-success', {
         token: loginData.token,
         configPassword: profilePassword.value,
         mainPassword: password.value
       });
     } else {
-      errorMessage.value = loginData.message || '登录失败，请检查您的凭据。';
+      messageType.value = 'error';
+      message.value = loginData.message || '登录失败，请检查您的凭据。';
     }
   } catch (error) {
-    errorMessage.value = '无法连接到服务器。';
+    messageType.value = 'error';
+    message.value = '无法连接到服务器。';
   }
 };
 </script>
@@ -66,7 +73,11 @@ const handleLogin = async () => {
       </div>
     </div>
 
-    <RegisterView v-if="showRegisterView" @back="showRegisterView = false" />
+    <RegisterView 
+      v-if="showRegisterView" 
+      @back="showRegisterView = false"
+      @register-success="handleRegistrationSuccess" 
+    />
     
     <div v-else class="login-right">
       <div class="login-form-wrapper">
@@ -76,8 +87,8 @@ const handleLogin = async () => {
         </div>
         <form class="login-form" @submit.prevent="handleLogin">
           
-          <div v-if="errorMessage" class="error-message">
-              {{ errorMessage }}
+          <div v-if="message" class="message" :class="messageType">
+              {{ message }}
           </div>
 
           <div class="input-group">
@@ -125,79 +136,32 @@ const handleLogin = async () => {
 </template>
 
 <style scoped>
-/* 样式保持不变，因为新视图将重用这些样式 */
-.error-message {
-  color: #842029;
-  background-color: #f8d7da;
-  border-color: #f5c2c7;
-  padding: 1rem;
-  margin-bottom: 1.5rem;
-  border: 1px solid transparent;
-  border-radius: .25rem;
-  text-align: center;
-  font-size: 14px;
-}
-
-.login-container {
-  display: flex;
-  width: 100vw;
-  height: 100vh;
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-  background-color: #f0f2f5;
-}
-.login-left {
-  flex: 2;
-  background-color: #007aff;
-  color: white;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  text-align: center;
-  padding: 40px;
-}
+/* 样式与之前相同，但为消息框添加了 success 样式 */
+.message { padding: 1rem; margin-bottom: 1.5rem; border: 1px solid transparent; border-radius: .25rem; text-align: center; font-size: 14px; }
+.message.success { color: #155724; background-color: #d4edda; border-color: #c3e6cb; }
+.message.error { color: #842029; background-color: #f8d7da; border-color: #f5c2c7; }
+.login-container { display: flex; width: 100vw; height: 100vh; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; background-color: #f0f2f5; }
+.login-left { flex: 2; background-color: #007aff; color: white; display: flex; justify-content: center; align-items: center; text-align: center; padding: 40px; }
 .logo h1 { margin-top: 1rem; font-weight: 600; letter-spacing: 1px; }
-.login-right {
-  flex: 3;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  padding: 40px;
-}
+.login-right { flex: 3; display: flex; justify-content: center; align-items: center; padding: 40px; }
 .login-form-wrapper { max-width: 400px; width: 100%; }
 .form-header { text-align: center; margin-bottom: 2.5rem; }
 .form-header h2 { font-size: 28px; margin-bottom: 0.5rem; color: #1d2b3a; }
 .form-header p { color: #6c757d; font-size: 16px; }
 .input-group { margin-bottom: 1.5rem; }
 .input-group label { display: block; margin-bottom: 0.5rem; font-weight: 500; color: #333; }
-.input-group input { 
-  width: 100%; padding: 12px 15px; border: 1px solid #ccc; 
-  border-radius: 8px; font-size: 16px; box-sizing: border-box; 
-  transition: all 0.2s ease-in-out; 
-}
-.input-group input:focus { 
-  outline: none; border-color: #007aff; 
-  box-shadow: 0 0 0 3px rgba(0, 122, 255, 0.2); 
-}
+.input-group input { width: 100%; padding: 12px 15px; border: 1px solid #ccc; border-radius: 8px; font-size: 16px; box-sizing: border-box; transition: all 0.2s ease-in-out; }
+.input-group input:focus { outline: none; border-color: #007aff; box-shadow: 0 0 0 3px rgba(0, 122, 255, 0.2); }
 .password-input-wrapper { position: relative; display: flex; align-items: center; }
 .password-input-wrapper input { padding-right: 50px; }
 .toggle-password { position: absolute; right: 15px; cursor: pointer; color: #999; display: flex; align-items: center; height: 100%; }
 .toggle-password:hover { color: #333; }
 .button-group { display: flex; gap: 1rem; margin-top: 2rem;}
-.login-button, .register-button { 
-  flex-grow: 1; padding: 14px; border: none; border-radius: 8px; 
-  font-size: 16px; font-weight: bold; cursor: pointer; 
-  transition: all 0.2s ease-in-out; 
-}
+.login-button, .register-button { flex-grow: 1; padding: 14px; border: none; border-radius: 8px; font-size: 16px; font-weight: bold; cursor: pointer; transition: all 0.2s ease-in-out; }
 .login-button { background-color: #007aff; color: white; }
-.login-button:hover { 
-  background-color: #0056b3; transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(0, 122, 255, 0.2);
-}
+.login-button:hover { background-color: #0056b3; transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0, 122, 255, 0.2); }
 .register-button { background-color: #e9ecef; color: #495057; }
-.register-button:hover { 
-  background-color: #dbe1e6; transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-}
+.register-button:hover { background-color: #dbe1e6; transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1); }
 @media (max-width: 768px) {
   .login-left { display: none; }
   .login-right { flex: 1; }

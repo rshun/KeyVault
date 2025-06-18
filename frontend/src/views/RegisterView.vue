@@ -1,38 +1,65 @@
 <script setup>
 import { ref, defineEmits, onMounted, nextTick } from 'vue';
 
-const emit = defineEmits(['back']);
+// 修改点1: 新增 'register-success' 事件定义
+const emit = defineEmits(['back', 'register-success']);
 
 const username = ref('');
 const password = ref('');
-// 'path' ref 现在用于存储和显示选择的路径
 const path = ref('');
-const successMessage = ref('');
-const usernameInput = ref(null); // 用于自动聚焦
+const message = ref(''); 
+const messageType = ref('success');
+const usernameInput = ref(null);
 
-// 组件挂载后，自动聚焦到第一个输入框
 onMounted(() => {
   nextTick(() => {
     usernameInput.value?.focus();
   });
 });
 
-const handleRegister = () => {
+const handleRegister = async () => {
+  message.value = ''; 
   if (!username.value || !password.value || !path.value) {
-    successMessage.value = '错误：用户名、密码和路径都不能为空！';
+    messageType.value = 'error';
+    message.value = '错误：用户名、密码和路径都不能为空！';
     return;
   }
-  // 实际的注册逻辑可以放在这里，现在只显示成功
-  successMessage.value = `注册成功！数据库将保存至：${path.value}`;
+
+  try {
+    const response = await fetch('http://localhost:3000/api/register', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        username: username.value,
+        password: password.value,
+        path: path.value,
+      }),
+    });
+
+    const result = await response.json();
+
+    if (response.ok && result.success) {
+      // 修改点2: 不再设置本地消息，而是触发事件并传递成功消息
+      emit('register-success', result.message);
+    } else {
+      messageType.value = 'error';
+      message.value = result.message || '发生未知错误，请重试。';
+    }
+  } catch (error) {
+    console.error('注册请求失败:', error);
+    messageType.value = 'error';
+    message.value = '无法连接到服务器，请检查后端服务是否正在运行。';
+  }
 };
+
 
 const goBack = () => {
   emit('back');
 };
 
-// 调用预加载脚本暴露的 API
 const selectPath = async () => {
-  // 检查 API 是否存在
   if (window.electronAPI && typeof window.electronAPI.showSaveDialog === 'function') {
     const selectedPath = await window.electronAPI.showSaveDialog();
     if (selectedPath) {
@@ -40,7 +67,8 @@ const selectPath = async () => {
     }
   } else {
     console.error('electronAPI.showSaveDialog is not available!');
-    successMessage.value = '错误：无法调用文件选择功能。';
+    messageType.value = 'error';
+    message.value = '错误：无法调用文件选择功能。';
   }
 };
 </script>
@@ -54,8 +82,8 @@ const selectPath = async () => {
       </div>
       <form class="login-form" @submit.prevent="handleRegister">
         
-        <div v-if="successMessage" class="message" :class="{ 'error': successMessage.includes('错误') }">
-            {{ successMessage }}
+        <div v-if="message" class="message" :class="messageType">
+            {{ message }}
         </div>
 
         <div class="input-group">
@@ -68,9 +96,10 @@ const selectPath = async () => {
         </div>
         
         <div class="input-group horizontal-group">
+            <label for="reg-path">数据库文件路径</label>
             <div class="path-selection-group">
               <input id="reg-path" type="text" v-model="path" required readonly placeholder="点击右侧按钮选择...">
-              <button type="button" @click="selectPath" class="browse-button">数据文件路径</button>
+              <button type="button" @click="selectPath" class="browse-button">选择路径</button>
             </div>
         </div>
         
@@ -86,9 +115,6 @@ const selectPath = async () => {
 <style scoped>
 /* 消息样式 */
 .message {
-  color: #155724;
-  background-color: #d4edda;
-  border-color: #c3e6cb;
   padding: 1rem;
   margin-bottom: 1.5rem;
   border: 1px solid transparent;
@@ -96,27 +122,31 @@ const selectPath = async () => {
   text-align: center;
   font-size: 14px;
 }
+.message.success {
+  color: #155724;
+  background-color: #d4edda;
+  border-color: #c3e6cb;
+}
 .message.error {
     color: #842029;
     background-color: #f8d7da;
     border-color: #f5c2c7;
 }
 
-/* **修改点**: 新增 horizontal-group 样式用于水平布局 */
+/* 水平布局样式 */
 .horizontal-group {
   display: flex;
   align-items: center;
-  gap: 10px; /* 在标签和输入框之间增加一些间距 */
+  gap: 10px;
 }
 .horizontal-group label {
-  margin-bottom: 0; /* 移除 flex 项的下外边距 */
-  flex-shrink: 0; /* 防止标签文字收缩 */
+  margin-bottom: 0;
+  flex-shrink: 0;
 }
 .horizontal-group .path-selection-group {
-  flex-grow: 1; /* 让路径选择部分占据剩余空间 */
+  flex-grow: 1;
 }
 
-/* 路径选择组的样式 */
 .path-selection-group {
   display: flex;
   align-items: center;
@@ -135,12 +165,11 @@ const selectPath = async () => {
   border-top-right-radius: 8px;
   border-bottom-right-radius: 8px;
   transition: background-color 0.2s;
-  flex-shrink: 0; /* 防止按钮收缩 */
+  flex-shrink: 0;
 }
 .browse-button:hover {
   background-color: #e2e6ea;
 }
-
 
 /* 沿用 LoginView 的样式 */
 .login-right {
