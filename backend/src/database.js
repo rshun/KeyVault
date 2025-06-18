@@ -1,7 +1,7 @@
 const sqlite3 = require('sqlite3').verbose();
 
 // 主用户数据库，固定文件名
-const USER_DB_SOURCE = "users.db";
+const USER_DB_SOURCE = process.env.USER_DB_PATH || "users.db";
 
 // 连接到主用户数据库
 const userDB = new sqlite3.Database(USER_DB_SOURCE, (err) => {

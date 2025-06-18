@@ -1,9 +1,11 @@
 const express = require('express');
 const cors = require('cors');
-const { userDB, createUserVault, getUserVaultConnection } = require('./database.js');
+const { userDB, createUserVault } = require('./database.js');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 const CryptoJS = require("crypto-js");
+const sqlite3 = require('sqlite3');
+
 
 const app = express();
 const PORT = 3000;
@@ -139,14 +141,17 @@ app.post('/api/data', verifyToken, (req, res) => {
     if (!configPassword || !mainPassword || !db_path) {
         return res.status(400).json({ success: false, message: "缺少必要的参数或认证信息" });
     }
-    getUserVaultConnection(db_path, (err, vaultDb) => {
+
+    const vaultDb = new sqlite3.Database(db_path, (err) => {
         if (err) {
             return res.status(500).json({ success: false, message: `无法打开您的密码库文件，请检查路径和文件权限。错误: ${err.message}` });
         }
+
         const sql = "SELECT * FROM vault_items";
         vaultDb.all(sql, [], (err, rows) => {
             vaultDb.close(); 
             if (err) return res.status(400).json({ "error": err.message });
+
             try {
                 const decryptedRows = rows.map(item => ({
                     id: item.id, userId: item.user_id, webName: decrypt(item.web_name, configPassword),
@@ -184,10 +189,16 @@ app.put('/api/data/batch-update', verifyToken, (req, res) => {
     if (!Array.isArray(items) || !configPassword || !db_path) {
         return res.status(400).json({ success: false, message: "请求格式不正确" });
     }
-    getUserVaultConnection(db_path, (err, vaultDb) => {
+
+    // --- 修改开始 ---
+    // 直接使用 sqlite3.Database 构造函数并传入一个回调函数
+    // 不再使用 getUserVaultConnection
+    const vaultDb = new sqlite3.Database(db_path, (err) => {
         if (err) {
             return res.status(500).json({ success: false, message: `无法打开您的密码库文件。错误: ${err.message}` });
         }
+        
+        // 现在这段代码可以被正确执行了
         vaultDb.serialize(() => {
             vaultDb.run("BEGIN TRANSACTION", (err) => { 
                 if (err) {
@@ -195,8 +206,10 @@ app.put('/api/data/batch-update', verifyToken, (req, res) => {
                     return res.status(500).json({ success: false, message: "数据库事务开启失败" });
                 } 
             });
+
             const results = { created: 0, updated: 0, failed: 0 };
             const newIdMap = {};
+
             const promises = items.map(item => {
                 return new Promise((resolve) => {
                     const encryptedData = {
@@ -205,28 +218,41 @@ app.put('/api/data/batch-update', verifyToken, (req, res) => {
                         allow_spec: encrypt(item.allowSpec, configPassword), key_type: encrypt(item.keyType, configPassword),
                         update_time: encrypt(String(item.updateTime), configPassword), memo: encrypt(item.Memo, configPassword), web_icon: encrypt(item.webIcon, configPassword)
                     };
+
                     if (item.isNew) {
                         const columns = ['user_id', ...Object.keys(encryptedData)];
                         const placeholders = columns.map(() => '?').join(',');
                         const sql = `INSERT INTO vault_items (${columns.join(',')}) VALUES (${placeholders})`;
                         const params = [userId, ...Object.values(encryptedData)];
+
                         vaultDb.run(sql, params, function(err) {
-                            if (err) { results.failed++; } 
-                            else { results.created++; newIdMap[item.id] = this.lastID; }
+                            if (err) {
+                                console.error("Insert failed:", err.message);
+                                results.failed++; 
+                            } else { 
+                                results.created++; 
+                                newIdMap[item.id] = this.lastID; 
+                            }
                             resolve();
                         });
                     } else {
                         const setClauses = Object.keys(encryptedData).map(key => `${key} = ?`).join(', ');
                         const sql = `UPDATE vault_items SET ${setClauses} WHERE id = ?`;
                         const params = [...Object.values(encryptedData), item.id];
+
                         vaultDb.run(sql, params, function(err) {
-                            if (err) { results.failed++; } 
-                            else if (this.changes > 0) { results.updated++; }
+                            if (err) { 
+                                console.error(`Update failed for ID ${item.id}:`, err.message);
+                                results.failed++; 
+                            } else if (this.changes > 0) { 
+                                results.updated++; 
+                            }
                             resolve();
                         });
                     }
                 });
             });
+
             Promise.all(promises).then(() => {
                 const finalAction = results.failed > 0 ? "ROLLBACK" : "COMMIT";
                 vaultDb.run(finalAction, (err) => {
@@ -250,6 +276,7 @@ app.put('/api/data/batch-update', verifyToken, (req, res) => {
             });
         });
     });
+    // --- 修改结束 ---
 });
 
 app.put('/api/data/:id', verifyToken, (req, res) => {
@@ -292,18 +319,28 @@ app.delete('/api/data/:id', verifyToken, (req, res) => {
     if (!db_path) {
         return res.status(400).json({ success: false, message: "缺少认证信息" });
     }
-    getUserVaultConnection(db_path, (err, vaultDb) => {
+
+    // --- 修改开始 ---
+    // 直接使用 sqlite3.Database 的构造函数来建立连接
+    const vaultDb = new sqlite3.Database(db_path, (err) => {
         if (err) {
             return res.status(500).json({ success: false, message: `无法打开您的密码库文件。错误: ${err.message}` });
         }
+        
+        // 现在删除逻辑可以被正确执行
         const sql = 'DELETE FROM vault_items WHERE id = ?';
         vaultDb.run(sql, [id], function(err) {
             vaultDb.close();
-            if (err) return res.status(400).json({ success: false, message: err.message });
-            if (this.changes === 0) return res.status(404).json({ success: false, message: "记录未找到" });
+            if (err) {
+                return res.status(400).json({ success: false, message: err.message });
+            }
+            if (this.changes === 0) {
+                return res.status(404).json({ success: false, message: "记录未找到" });
+            }
             res.json({ success: true, message: "记录已删除" });
         });
     });
+    // --- 修改结束 ---
 });
 
 app.listen(PORT, () => {

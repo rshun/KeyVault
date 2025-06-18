@@ -5,6 +5,13 @@ const { spawn } = require('child_process');
 let backendProcess;
 let mainWindow;
 
+// --- 修改开始 ---
+// 1. 定义一个正确的、持久化的 users.db 路径
+const usersDbPath = path.join(app.getPath('userData'), 'users.db');
+// 2. 通过环境变量将这个路径传递给后端
+process.env.USER_DB_PATH = usersDbPath;
+// --- 修改结束 ---
+
 // 计算 db 文件路径
 const dbPath = app.isPackaged
   ? path.join(path.dirname(app.getPath('exe')), 'keyvault.db')
