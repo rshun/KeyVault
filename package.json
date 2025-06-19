@@ -41,11 +41,11 @@
       }
     ],
     "win": {
-      "target": "nsis",
+      "target": "zip",
       "verifyUpdateCodeSignature": false
     },
     "mac": {
-      "target": "dmg",
+      "target": "zip",
       "identity": null
     },
     "portable": {

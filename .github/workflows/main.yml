@@ -1,16 +1,16 @@
 # .github/workflows/main.yml
 
-name: Build for Windows & macOS
+name: Build and Release Portable
 
 on:
   push:
-    branches: [ "master" ]
-  pull_request:
-    branches: [ "master" ]
+    tags:
+      - 'v*' # 当一个以 'v' 开头的标签被推送时触发，例如: v1.0, v2.1.3
 
 jobs:
+  # --- Windows 构建工作 ---
   build-windows:
-    name: Build Windows (x64)
+    name: Build Windows Portable (x64)
     runs-on: windows-latest
     steps:
       - name: Checkout repository
@@ -21,26 +21,25 @@ jobs:
         with:
           node-version: 20
 
-      - name: Install root dependencies
-        run: npm ci
-
-      - name: Install frontend dependencies
-        run: npm ci --prefix frontend
-
-      - name: Install backend dependencies
-        run: npm ci --prefix backend
+      - name: Install dependencies
+        run: |
+          npm ci
+          npm ci --prefix frontend
+          npm ci --prefix backend
+        shell: bash
 
       - name: Build and package Windows application
         run: npm run package -- --win --x64
-
+      
       - name: Upload Windows Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: KeyVault-Windows-x64-Setup
-          path: dist/*.exe
+          name: keyvault-windows-x64-portable
+          path: dist/*.zip
 
+  # --- macOS 构建工作 ---
   build-macos:
-    name: Build macOS (ARM64)
+    name: Build macOS Portable (ARM64)
     runs-on: macos-latest
     steps:
       - name: Checkout repository
@@ -51,14 +50,11 @@ jobs:
         with:
           node-version: 20
 
-      - name: Install root dependencies
-        run: npm ci
-
-      - name: Install frontend dependencies
-        run: npm ci --prefix frontend
-
-      - name: Install backend dependencies
-        run: npm ci --prefix backend
+      - name: Install dependencies
+        run: |
+          npm ci
+          npm ci --prefix frontend
+          npm ci --prefix backend
 
       - name: Build and package macOS application
         run: npm run package -- --mac --arm64
@@ -66,5 +62,31 @@ jobs:
       - name: Upload macOS Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: KeyVault-macOS-ARM64-Build
-          path: dist/*.dmg
+          name: keyvault-macos-arm64-portable
+          path: dist/*.zip
+
+  # --- 发布工作 ---
+  release:
+    name: Create GitHub Release
+    runs-on: ubuntu-latest
+    needs: [build-windows, build-macos] # 等待构建工作完成后再执行
+    permissions:
+      contents: write # 需要此权限才能创建 Release
+
+    steps:
+      - name: Download Windows artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: keyvault-windows-x64-portable
+          path: release-assets/
+
+      - name: Download macOS artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: keyvault-macos-arm64-portable
+          path: release-assets/
+
+      - name: Create Release and Upload Assets
+        uses: softprops/action-gh-release@v2
+        with:
+          files: release-assets/*.zip
