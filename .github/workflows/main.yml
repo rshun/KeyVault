@@ -1,55 +1,67 @@
-{
-  "name": "keyvault-desktop",
-  "version": "1.0.0",
-  "description": "A secure password manager",
-  "main": "main.js",
-  "scripts": {
-    "frontend": "npm run dev --prefix frontend",
-    "backend": "node backend/src/server.js",
-    "start": "concurrently \"npm:backend\" \"wait-on http://localhost:3000 && electron .\"",
-    "dev": "concurrently \"npm:frontend\" \"npm:start\"",
-    "build:frontend": "npm run build --prefix frontend",
-    "preview": "npm run build:frontend && electron .",
-    "package": "npm run build:frontend && electron-builder"
-  },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
-  "devDependencies": {
-    "concurrently": "^8.2.2",
-    "electron": "^31.0.1",
-    "electron-builder": "^24.13.3",
-    "wait-on": "^7.2.0"
-  },
-  "build": {
-    "appId": "com.example.keyvault",
-    "productName": "KeyVault",
-    "publish": null,
-    "files": [
-      "main.js",
-      "preload.js",
-      "frontend/dist/**/*",
-      "backend/**/*"
-    ],
-    "extraResources": [
-      {
-        "from": "backend/",
-        "to": "app.asar.unpacked/backend",
-        "filter": [
-          "**/*"
-        ]
-      }
-    ],
-    "win": {
-      "target": "zip",
-      "verifyUpdateCodeSignature": false
-    },
-    "mac": {
-      "target": "zip",
-      "identity": null
-    },
-    "portable": {
-      "unpackDirName": "KeyVault-data"
-    }
-  }
-}
+# .github/workflows/main.yml
+
+name: Build Portable Application
+
+on:
+  push:
+    branches: [ "master" ]
+  pull_request:
+    branches: [ "master" ]
+
+jobs:
+  # --- Windows 构建工作 ---
+  build-windows:
+    name: Build Windows Portable (x64)
+    runs-on: windows-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install dependencies
+        run: |
+          npm ci
+          npm ci --prefix frontend
+          npm ci --prefix backend
+        shell: bash
+
+      - name: Build and package Windows application
+        run: npm run package -- --win --x64
+      
+      - name: Upload Windows Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: keyvault-windows-x64-portable
+          path: dist/*.zip
+
+  # --- macOS 构建工作 ---
+  build-macos:
+    name: Build macOS Portable (ARM64)
+    runs-on: macos-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install dependencies
+        run: |
+          npm ci
+          npm ci --prefix frontend
+          npm ci --prefix backend
+
+      - name: Build and package macOS application
+        run: npm run package -- --mac --arm64
+
+      - name: Upload macOS Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: keyvault-macos-arm64-portable
+          path: dist/*.zip
