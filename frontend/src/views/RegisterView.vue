@@ -1,13 +1,12 @@
 <script setup>
 import { ref, defineEmits, onMounted, nextTick } from 'vue';
 
-// 修改点1: 新增 'register-success' 事件定义
 const emit = defineEmits(['back', 'register-success']);
 
 const username = ref('');
 const password = ref('');
-const path = ref('');
-const message = ref(''); 
+// 移除了 path ref
+const message = ref('');
 const messageType = ref('success');
 const usernameInput = ref(null);
 
@@ -18,30 +17,28 @@ onMounted(() => {
 });
 
 const handleRegister = async () => {
-  message.value = ''; 
-  if (!username.value || !password.value || !path.value) {
+  message.value = '';
+  // 移除了对 path 的检查
+  if (!username.value || !password.value) {
     messageType.value = 'error';
-    message.value = '错误：用户名、密码和路径都不能为空！';
+    message.value = '错误：用户名和密码都不能为空！';
     return;
   }
 
   try {
     const response = await fetch('http://localhost:3000/api/register', {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         username: username.value,
         password: password.value,
-        path: path.value,
+        // 不再发送 path
       }),
     });
 
     const result = await response.json();
 
     if (response.ok && result.success) {
-      // 修改点2: 不再设置本地消息，而是触发事件并传递成功消息
       emit('register-success', result.message);
     } else {
       messageType.value = 'error';
@@ -54,23 +51,11 @@ const handleRegister = async () => {
   }
 };
 
-
 const goBack = () => {
   emit('back');
 };
 
-const selectPath = async () => {
-  if (window.electronAPI && typeof window.electronAPI.showSaveDialog === 'function') {
-    const selectedPath = await window.electronAPI.showSaveDialog();
-    if (selectedPath) {
-      path.value = selectedPath;
-    }
-  } else {
-    console.error('electronAPI.showSaveDialog is not available!');
-    messageType.value = 'error';
-    message.value = '错误：无法调用文件选择功能。';
-  }
-};
+// 移除了 selectPath 函数
 </script>
 
 <template>
@@ -93,14 +78,6 @@ const selectPath = async () => {
         <div class="input-group">
             <label for="reg-password">密码</label>
             <input id="reg-password" type="password" v-model="password" required>
-        </div>
-        
-        <div class="input-group horizontal-group">
-            <label for="reg-path"></label>
-            <div class="path-selection-group">
-              <button type="button" @click="selectPath" class="browse-button">数据库文件路径</button>
-              <input id="reg-path" type="text" v-model="path" required readonly placeholder="点击左侧按钮选择...">
-            </div>
         </div>
         
         <div class="button-group">

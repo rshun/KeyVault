@@ -2,21 +2,38 @@
 import { ref, onMounted } from 'vue';
 import LoginView from './views/LoginView.vue';
 import MainView from './views/MainView.vue';
+import SetupView from './views/SetupView.vue'; // 确认此文件存在
 
-const isLoggedIn = ref(false);
+// 定义应用状态
+const AppState = {
+  LOADING: 'loading',
+  SETUP: 'setup',
+  LOGIN: 'login',
+  MAIN: 'main',
+};
+
+const currentState = ref(AppState.LOADING);
 const userInfo = ref([]);
 const authToken = ref('');
 const configPassword = ref('');
 const mainPassword = ref('');
+// 新增一个错误消息状态
+const dataError = ref('');
 
-// 组件加载时执行的生命周期钩子
-onMounted(() => {
-  // 检查浏览器中是否已保存登录凭据
+onMounted(async () => {
+  // 确认您有 SetupView.vue, 如果没有，请先简化这里的逻辑
+  if (window.electronAPI) {
+    const workspacePath = await window.electronAPI.getWorkspacePath();
+    if (!workspacePath) {
+      currentState.value = AppState.SETUP;
+      return;
+    }
+  }
+
   const storedToken = sessionStorage.getItem('authToken');
   const storedConfigPwd = sessionStorage.getItem('configPassword');
   const storedMainPwd = sessionStorage.getItem('mainPassword');
 
-  // 如果凭据都存在，则自动登录
   if (storedToken && storedConfigPwd && storedMainPwd) {
     console.log("检测到已保存的登录状态，正在自动登录...");
     handleLoginSuccess({
@@ -24,11 +41,14 @@ onMounted(() => {
       configPassword: storedConfigPwd,
       mainPassword: storedMainPwd
     });
+  } else {
+    currentState.value = AppState.LOGIN;
   }
 });
 
-// 获取数据的函数
+// **修改后的 fetchData 函数**
 const fetchData = async (token) => {
+  dataError.value = ''; // 重置错误
   try {
     const response = await fetch('http://localhost:3000/api/data', {
       method: 'POST',
@@ -45,65 +65,58 @@ const fetchData = async (token) => {
     if (data.success) {
         userInfo.value = data.data;
     } else {
-        alert("获取数据失败: " + data.message);
-        handleLogout(); // 如果获取数据失败（例如token过期），则自动登出
+        // **修改点：不再调用 handleLogout()，而是设置错误信息**
+        console.error("获取数据失败: " + data.message);
+        dataError.value = `获取数据失败，请检查主密码是否正确。(${data.message})`;
     }
   } catch (error) {
-     alert("获取数据时发生网络错误");
-     handleLogout();
+     // **修改点：不再调用 handleLogout()**
+     console.error("获取数据时发生网络错误", error);
+     dataError.value = '获取数据时发生网络错误，请检查后端服务。';
   }
 };
 
-// 登录成功后的处理函数
 const handleLoginSuccess = (credentials) => {
-  // 1. 保存凭据到浏览器的 sessionStorage
   sessionStorage.setItem('authToken', credentials.token);
   sessionStorage.setItem('configPassword', credentials.configPassword);
   sessionStorage.setItem('mainPassword', credentials.mainPassword);
 
-  // 2. 更新组件状态
   authToken.value = credentials.token;
   configPassword.value = credentials.configPassword;
   mainPassword.value = credentials.mainPassword;
   
-  // 3. 设置为已登录状态，显示主页面
-  isLoggedIn.value = true;
+  // 切换到主视图
+  currentState.value = AppState.MAIN;
   
-  // 4. 在后台获取数据
   fetchData(credentials.token);
 };
 
-// 新增：登出函数
-// App.vue
 const handleLogout = () => {
-    // 1. 清除浏览器中保存的所有凭据
     sessionStorage.removeItem('authToken');
     sessionStorage.removeItem('configPassword');
     sessionStorage.removeItem('mainPassword');
 
-    // 2. 重置组件内部的所有状态
-    isLoggedIn.value = false;
     authToken.value = '';
     configPassword.value = '';
     mainPassword.value = '';
     userInfo.value = [];
+    dataError.value = ''; // 清除错误信息
     
-    // 3. （可选，但推荐）通过 router 导航到登录页，确保URL也同步更新
-    // 如果您已经配置了路由守卫，当 isLoggedIn 变为 false 后，路由守卫也会自动处理跳转
-    // router.push({ name: 'login' }); // 如果需要的话，可以从 './router' 导入 router
+    currentState.value = AppState.LOGIN;
 };
 </script>
 
 <template>
-  <!-- 监听子组件发出的 logout 事件 -->
-  <LoginView v-if="!isLoggedIn" @login-success="handleLoginSuccess" />
-  
+  <div v-if="currentState === AppState.LOADING">加载中...</div>
+  <SetupView v-else-if="currentState === AppState.SETUP" />
+  <LoginView v-else-if="currentState === AppState.LOGIN" @login-success="handleLoginSuccess" />
   <MainView 
-    v-else 
+    v-else-if="currentState === AppState.MAIN"
     :password-data="userInfo"
     :auth-token="authToken"
     :config-password="configPassword"
     :main-password="mainPassword"
+    :error-message="dataError"
     @logout="handleLogout"
   />
 </template>

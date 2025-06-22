@@ -1,73 +1,63 @@
 const sqlite3 = require('sqlite3').verbose();
+const path = require('path');
+const fs = require('fs');
 
-// 主用户数据库，固定文件名
-const USER_DB_SOURCE = process.env.USER_DB_PATH || "users.db";
+// 从环境变量获取工作区路径
+const WORKSPACE_PATH = process.env.WORKSPACE_PATH;
+if (!WORKSPACE_PATH) {
+    // 如果没有工作区路径，数据库模块不能工作
+    console.error("错误：工作区路径未设置。数据库无法初始化。");
+    // 抛出错误或以其他方式处理，确保应用不会在没有有效路径的情况下继续
+    throw new Error("Workspace path is not defined.");
+}
 
-// 连接到主用户数据库
+const USER_DB_SOURCE = path.join(WORKSPACE_PATH, 'users.db');
+
 const userDB = new sqlite3.Database(USER_DB_SOURCE, (err) => {
     if (err) {
       console.error("连接用户数据库失败:", err.message);
       throw err;
-    } else {
-        console.log('已成功连接到主用户数据库 (users.db)。');
-        const sql = `
-        CREATE TABLE IF NOT EXISTS users (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            username TEXT UNIQUE NOT NULL,
-            password_hash TEXT NOT NULL,
-            db_path TEXT NOT NULL,
-            created_at TEXT NOT NULL,
-            updated_at TEXT NOT NULL,
-            CONSTRAINT username_unique UNIQUE (username)
-        )`;
-        userDB.run(sql, (err) => {
-            if (err) {
-                console.error("创建 users 表失败:", err.message);
-            } else {
-                console.log('成功初始化 users 表。');
-            }
-        });
     }
+    console.log('已成功连接到主用户数据库:', USER_DB_SOURCE);
+    const sql = `
+    CREATE TABLE IF NOT EXISTS users (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        username TEXT UNIQUE NOT NULL,
+        password_hash TEXT NOT NULL,
+        db_path TEXT NOT NULL,
+        created_at TEXT NOT NULL,
+        updated_at TEXT NOT NULL,
+        CONSTRAINT username_unique UNIQUE (username)
+    )`;
+    userDB.run(sql, (err) => {
+        if (err) console.error("创建 users 表失败:", err.message);
+    });
 });
 
-/**
- * 在指定路径创建一个新的用户密码库文件，并初始化表结构。
- * @param {string} dbPath 用户选择的数据库文件路径
- * @returns {Promise<void>} 操作完成时解析的 Promise
- */
 function createUserVault(dbPath) {
     return new Promise((resolve, reject) => {
+        // 确保保险库文件夹存在
+        const vaultDir = path.dirname(dbPath);
+        if (!fs.existsSync(vaultDir)) {
+            fs.mkdirSync(vaultDir, { recursive: true });
+        }
+
         const vaultDb = new sqlite3.Database(dbPath, (err) => {
             if (err) {
                 return reject(new Error(`创建或连接用户密码库失败 at ${dbPath}: ${err.message}`));
             }
-            console.log(`已成功创建/连接用户密码库: ${dbPath}`);
-
             const vaultTableSql = `
             CREATE TABLE IF NOT EXISTS vault_items (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 user_id INTEGER NOT NULL,
-                web_name TEXT,
-                web_addr TEXT,
-                login_name TEXT,
-                password_length TEXT,
-                allow_spec TEXT,
-                key_type TEXT,
-                update_time INTEGER,
-                memo TEXT,
-                web_icon TEXT,
+                web_name TEXT, web_addr TEXT, login_name TEXT, password_length TEXT,
+                allow_spec TEXT, key_type TEXT, update_time INTEGER, memo TEXT, web_icon TEXT,
                 FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE CASCADE
             )`;
-
             vaultDb.run(vaultTableSql, (err) => {
-                if (err) {
-                    vaultDb.close();
-                    return reject(new Error(`在 ${dbPath} 中创建 vault_items 表失败: ${err.message}`));
-                }
-                console.log(`在 ${dbPath} 中成功初始化 vault_items 表。`);
-                vaultDb.close((err) => {
-                    if (err) {
-                       return reject(new Error(`关闭数据库连接失败 for ${dbPath}: ${err.message}`));
+                vaultDb.close((closeErr) => {
+                    if (err || closeErr) {
+                        return reject(err || closeErr);
                     }
                     resolve();
                 });
@@ -76,10 +66,8 @@ function createUserVault(dbPath) {
     });
 }
 
-
 module.exports = {
     userDB,
     createUserVault,
-    // 辅助函数，用于在 API 请求中连接到指定的用户密码库
-    getUserVaultConnection: (dbPath) => new sqlite3.Database(dbPath)
+    getWorkspacePath: () => WORKSPACE_PATH, // 导出工作区路径给其他后端模块使用
 };
