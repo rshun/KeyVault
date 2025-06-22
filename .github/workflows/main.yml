@@ -40,7 +40,7 @@ jobs:
 
   # --- macOS 构建工作 ---
   build-macos:
-    name: Build macOS Portable (ARM64)
+    name: Build macOS (ARM64)
     runs-on: macos-latest
     steps:
       - name: Checkout repository
@@ -63,5 +63,5 @@ jobs:
       - name: Upload macOS Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: keyvault-macos-arm64-portable
-          path: dist/*.zip
+          name: keyvault-macos-arm64-build
+          path: dist/*.dmg

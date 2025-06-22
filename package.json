@@ -45,7 +45,7 @@
       "verifyUpdateCodeSignature": false
     },
     "mac": {
-      "target": "zip",
+      "target": "dmg",
       "identity": null
     },
     "portable": {
