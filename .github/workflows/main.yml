@@ -26,7 +26,6 @@ jobs:
         run: |
           npm ci
           npm ci --prefix frontend
-          npm ci --prefix backend
         shell: bash
 
       - name: Build and package Windows application
@@ -55,7 +54,6 @@ jobs:
         run: |
           npm ci
           npm ci --prefix frontend
-          npm ci --prefix backend
 
       - name: Build and package macOS application
         run: npm run package -- --mac --arm64
