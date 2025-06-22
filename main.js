@@ -1,29 +1,48 @@
 const { app, BrowserWindow, shell, ipcMain, dialog } = require('electron');
 const path = require('path');
-const { spawn } = require('child_process');
 
-let backendProcess;
 let mainWindow;
 
-// --- 修改开始 ---
+// --- 数据库路径设置 ---
 // 1. 定义一个正确的、持久化的 users.db 路径
 const usersDbPath = path.join(app.getPath('userData'), 'users.db');
 // 2. 通过环境变量将这个路径传递给后端
 process.env.USER_DB_PATH = usersDbPath;
-// --- 修改结束 ---
 
-// 计算 db 文件路径
+// 计算 keyvault.db 文件路径 (这个可能已经不再使用，但保留以防万一)
 const dbPath = app.isPackaged
   ? path.join(path.dirname(app.getPath('exe')), 'keyvault.db')
   : path.join(__dirname, 'backend/keyvault.db');
 
 process.env.DATABASE_PATH = dbPath;
 
+
+// --- 后端服务启动函数 (已修改) ---
+function startBackend() {
+  const backendPath = app.isPackaged
+    ? path.join(process.resourcesPath, 'app.asar.unpacked/backend/src/server.js')
+    : path.join(__dirname, 'backend/src/server.js');
+
+  console.log(`Starting backend by requiring: ${backendPath}`);
+  
+  try {
+    // 直接 require 后端服务器。这会在当前进程中执行脚本并启动服务器。
+    require(backendPath);
+  } catch (error) {
+    console.error('Failed to start backend:', error);
+    // 向用户显示一个更友好的错误对话框
+    dialog.showErrorBox('后台服务错误', `无法启动核心服务:\n${error.message}`);
+    // 退出应用，因为没有后台服务，应用无法工作
+    app.quit();
+  }
+}
+
+// --- 主窗口创建函数 ---
 function createWindow() {
   mainWindow = new BrowserWindow({
     width: 1200,
     height: 800,
-    center: true, // 使窗口在屏幕中央显示
+    center: true,
     frame: false,
     titleBarStyle: 'hidden',
     titleBarOverlay: {
@@ -32,14 +51,12 @@ function createWindow() {
       height: 40
     },
     webPreferences: {
-      // **修改点 1：指定预加载脚本的路径**
       preload: path.join(__dirname, 'preload.js'),
       nodeIntegration: false,
       contextIsolation: true,
     },
   });
 
-  // mainWindow.maximize(); // 已注释此行以取消全屏
   mainWindow.setMenu(null);
 
   const isDev = process.env.DEV_MODE === 'true';
@@ -59,52 +76,16 @@ function createWindow() {
   });
 }
 
-function startBackend() {
-  return new Promise((resolve, reject) => {
-    const backendPath = app.isPackaged
-      ? path.join(process.resourcesPath, 'app.asar.unpacked/backend/src/server.js')
-      : path.join(__dirname, 'backend/src/server.js');
+// --- 应用生命周期事件 ---
 
-    console.log(`Starting backend: ${backendPath}`);
-    backendProcess = spawn('node', [backendPath]);
-
-    let resolved = false;
-
-    backendProcess.stdout.on('data', (data) => {
-      const msg = data.toString();
-      console.log(`Backend stdout: ${msg}`);
-
-      // 等后端打印指定内容时再 resolve
-      if (!resolved && msg.includes('Backend started')) {
-        resolved = true;
-        resolve();
-      }
-    });
-
-    backendProcess.stderr.on('data', (data) => {
-      console.error(`Backend stderr: ${data}`);
-    });
-
-    backendProcess.on('close', (code) => {
-      console.log(`Backend exited with code ${code}`);
-      if (!resolved) reject(new Error('Backend process exited before ready.'));
-    });
-  });
-}
-
-// 启动流程
-app.whenReady().then(async () => {
+// 启动流程 (已修改)
+app.whenReady().then(() => {
   console.time('Startup');
 
-  try {
-    console.time('Backend');
-    await startBackend();  // 等待后端就绪
-    console.timeEnd('Backend');
-  } catch (err) {
-    console.error('Backend failed to start:', err);
-    app.quit(); // 后端失败则退出整个应用
-    return;
-  }
+  console.time('Backend');
+  // 直接调用启动函数
+  startBackend();
+  console.timeEnd('Backend');
 
   console.time('CreateWindow');
   createWindow();
@@ -117,7 +98,17 @@ app.whenReady().then(async () => {
   });
 });
 
-// **修改点 2：新增 IPC 监听器来处理文件对话框请求**
+// 所有窗口关闭时退出（非 mac）
+app.on('window-all-closed', () => {
+  if (process.platform !== 'darwin') app.quit();
+});
+
+// 退出时不再需要手动关闭后端子进程
+app.on('will-quit', () => {
+  // 因为后端和主进程在一起，所以不再需要手动关闭子进程
+});
+
+// --- IPC 通信 ---
 ipcMain.handle('dialog:show-save-dialog', async () => {
   const { canceled, filePath } = await dialog.showSaveDialog({
     title: '选择数据库保存路径',
@@ -134,15 +125,4 @@ ipcMain.handle('dialog:show-save-dialog', async () => {
   } else {
     return filePath;
   }
-});
-
-
-// 所有窗口关闭时退出（非 mac）
-app.on('window-all-closed', () => {
-  if (process.platform !== 'darwin') app.quit();
-});
-
-// 退出时关闭后端子进程
-app.on('will-quit', () => {
-  if (backendProcess) backendProcess.kill();
 });
