@@ -15,6 +15,7 @@
     "crypto-js": "^4.2.0",
     "express": "^5.1.0",
     "jsonwebtoken": "^9.0.2",
+    "keyvault-desktop": "file:..",
     "sqlite3": "^5.1.7"
   }
 }
