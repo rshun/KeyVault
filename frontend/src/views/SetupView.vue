@@ -72,11 +72,11 @@ async function openWorkspace() {
   align-items: center;
   width: 100vw;
   height: 100vh;
-  background-color: #f0f2f5;
+  background-color: var(--color-background);
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
 }
 .setup-box {
-  background: #fff;
+  background: var(--color-background-component);
   padding: 40px;
   border-radius: 12px;
   box-shadow: 0 8px 30px rgba(0,0,0,0.12);
@@ -84,12 +84,13 @@ async function openWorkspace() {
   text-align: center;
 }
 .logo { margin-bottom: 1rem; }
-h1 { color: #1d2b3a; margin-bottom: 0.5rem; }
-.subtitle { color: #6c757d; margin-bottom: 2.5rem; font-size: 16px; }
+.logo svg path { stroke: var(--color-heading); }
+h1 { color: var(--color-heading); margin-bottom: 0.5rem; }
+.subtitle { color: var(--color-text-muted); margin-bottom: 2.5rem; font-size: 16px; }
 .button-group { display: flex; flex-direction: column; gap: 1rem; }
 .action-button {
-  background-color: #fff;
-  border: 1px solid #ddd;
+  background-color: var(--color-background-component);
+  border: 1px solid var(--color-border);
   border-radius: 8px;
   padding: 1rem;
   text-align: left;
@@ -97,13 +98,13 @@ h1 { color: #1d2b3a; margin-bottom: 0.5rem; }
   transition: all 0.2s ease-in-out;
 }
 .action-button:hover {
-  border-color: #007aff;
+  border-color: var(--color-primary);
   box-shadow: 0 4px 15px rgba(0, 122, 255, 0.1);
   transform: translateY(-2px);
 }
-.btn-title { display: block; font-weight: bold; font-size: 16px; color: #333; }
-.btn-desc { font-size: 14px; color: #6c757d; }
-.tip { margin-top: 2.5rem; font-size: 13px; color: #6c757d; background: #f8f9fa; padding: 10px; border-radius: 6px; }
+.btn-title { display: block; font-weight: bold; font-size: 16px; color: var(--color-text); }
+.btn-desc { font-size: 14px; color: var(--color-text-muted); }
+.tip { margin-top: 2.5rem; font-size: 13px; color: var(--color-text-muted); background: var(--color-background); padding: 10px; border-radius: 6px; }
 .error-message {
   color: #842029;
   background-color: #f8d7da;

@@ -450,11 +450,11 @@ const logout = async () => { // REFACTORED
 
 <style scoped>
 .main-container {
-  width: 100%; height: 100vh; background-color: #f4f7f6; font-family: sans-serif;
+  width: 100%; height: 100vh; background-color: var(--color-background); font-family: sans-serif;
   display: flex; flex-direction: column; overflow: hidden;
 }
 .main-header {
-  background-color: #007aff; color: white; padding: 1rem 2rem; box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  background-color: var(--color-primary); color: var(--color-primary-text); padding: 1rem 2rem; box-shadow: 0 2px 4px rgba(0,0,0,0.1);
   display: flex; justify-content: space-between; align-items: center; -webkit-app-region: drag;
 }
 .main-header h1 { margin: 0; -webkit-app-region: no-drag; }
@@ -465,17 +465,20 @@ const logout = async () => { // REFACTORED
   flex-grow: 1; padding: 2rem; overflow-y: auto; overflow-x: hidden;
 }
 .password-table {
-  width: 100%; border-collapse: collapse; background-color: white;
+  width: 100%; border-collapse: collapse; background-color: var(--color-background-component);
   box-shadow: 0 1px 3px rgba(0,0,0,0.12), 0 1px 2px rgba(0,0,0,0.24);
   table-layout: fixed;
 }
 th, td {
-  border: 1px solid #ddd; padding: 12px; text-align: left;
+  border: 1px solid var(--color-border); padding: 12px; text-align: left;
   vertical-align: middle; word-break: break-all; overflow: hidden; text-overflow: ellipsis;
+  /* Make sure text color is inherited */
+  color: var(--color-text);
 }
 th {
-  background-color: #e9ecef; font-weight: 600; position: sticky; top: 0;
+  background-color: var(--table-header-bg); font-weight: 600; position: sticky; top: 0;
   position: relative;
+  color: var(--color-heading);
 }
 .th-content { padding-right: 10px; }
 .resize-handle {
@@ -504,11 +507,11 @@ th {
   display: flex; justify-content: center; align-items: center; z-index: 10000;
 }
 .modal-dialog {
-  background-color: white; padding: 2rem; border-radius: 8px;
+  background-color: var(--color-background-component); padding: 2rem; border-radius: 8px;
   box-shadow: 0 5px 15px rgba(0,0,0,0.3); text-align: center;
   max-width: 400px;
 }
-.modal-message { font-size: 16px; margin-bottom: 1.5rem; color: #333; }
+.modal-message { font-size: 16px; margin-bottom: 1.5rem; color: var(--color-text); }
 .modal-actions { display: flex; justify-content: center; gap: 1rem; }
 .modal-button {
   padding: 10px 20px; border-radius: 5px; border: none;
@@ -522,34 +525,34 @@ th {
 .modal-fade-enter-active, .modal-fade-leave-active { transition: opacity 0.3s ease; }
 .modal-fade-enter-from, .modal-fade-leave-to { opacity: 0; }
 /* --- Other styles --- */
-.filter-input { padding: 8px 12px; border-radius: 5px; border: 1px solid #ddd; margin-right: 1rem; font-size: 14px; }
-.header-button { background-color: #fff; color: #007aff; border: 1px solid #007aff; padding: 8px 15px; border-radius: 5px; cursor: pointer; font-weight: bold; transition: all 0.2s ease-in-out; margin-left: 1rem; }
-.header-button:hover { background-color: #e2f0ff; }
+.filter-input { padding: 8px 12px; border-radius: 5px; border: 1px solid var(--color-border); margin-right: 1rem; font-size: 14px; background-color: var(--color-background-component); color: var(--color-text); }
+.header-button { background-color: var(--color-background-component); color: var(--color-primary); border: 1px solid var(--color-primary); padding: 8px 15px; border-radius: 5px; cursor: pointer; font-weight: bold; transition: all 0.2s ease-in-out; margin-left: 1rem; }
+.header-button:hover { background-color: var(--color-primary-hover-bg); }
 .save-all-button { background-color: #28a745; color: white; border-color: #28a745; }
 .save-all-button:hover { background-color: #218838; }
 .logout-button { background-color: #dc3545; color: white; border-color: #dc3545; }
 .logout-button:hover { background-color: #c82333; }
 .clear-clipboard-button { background-color: #ffc107; color: #212529; border-color: #ffc107; }
 .clear-clipboard-button:hover { background-color: #e0a800; }
-tbody tr:nth-child(even) { background-color: #f9f9f9; }
-tbody tr:hover { background-color: #e2f0ff; }
+tbody tr:nth-child(even) { background-color: var(--table-row-even-bg); }
+tbody tr:hover { background-color: var(--color-primary-hover-bg); }
 .truncate-cell-wrapper { max-width: 250px; overflow-x: auto; white-space: nowrap; -ms-overflow-style: none; scrollbar-width: none; }
 .truncate-cell-wrapper::-webkit-scrollbar { display: none; }
 .web-icon { width: 24px; height: 24px; vertical-align: middle; }
 .password-cell { cursor: pointer; user-select: none; white-space: nowrap; }
-a { color: #007aff; text-decoration: none; }
+a { color: var(--color-text-link); text-decoration: none; }
 a:hover { text-decoration: underline; }
-.context-menu { position: fixed; background-color: white; border: 1px solid #ccc; box-shadow: 0 2px 10px rgba(0,0,0,0.2); border-radius: 5px; min-width: 150px; z-index: 1000; padding: 5px 0; }
-.context-menu-item { padding: 8px 15px; cursor: pointer; }
-.context-menu-item:hover { background-color: #007aff; color: white; }
-.inline-edit-input { width: 100%; padding: 5px; border: 1px solid #007aff; border-radius: 3px; box-sizing: border-box; }
+.context-menu { position: fixed; background-color: var(--color-background-component); border: 1px solid var(--color-border); box-shadow: 0 2px 10px rgba(0,0,0,0.2); border-radius: 5px; min-width: 150px; z-index: 1000; padding: 5px 0; }
+.context-menu-item { padding: 8px 15px; cursor: pointer; color: var(--color-text); }
+.context-menu-item:hover { background-color: var(--color-primary); color: var(--color-primary-text); }
+.inline-edit-input { width: 100%; padding: 5px; border: 1px solid var(--color-primary); border-radius: 3px; box-sizing: border-box; background-color: var(--color-background-soft); color: var(--color-text); }
 .delete-button { border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer; transition: background-color 0.2s; background-color: #dc3545; color: white; margin-left: 5px; }
 .delete-button:hover { background-color: #c82333; }
 
 /* Styles for right-click context menu */
 .context-menu-separator {
   height: 1px;
-  background-color: #eee;
+  background-color: var(--color-border);
   margin: 4px 0;
 }
 .context-menu-item.danger {
