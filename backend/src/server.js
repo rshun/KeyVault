@@ -1,11 +1,11 @@
 const express = require('express');
 const cors = require('cors');
-const { userDB, createUserVault } = require('./database.js');
+const path = require('path');
+const { userDB, createUserVault, getWorkspacePath } = require('./database.js');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 const CryptoJS = require("crypto-js");
 const sqlite3 = require('sqlite3');
-
 
 const app = express();
 const PORT = 3000;
@@ -86,17 +86,26 @@ const verifyToken = (req, res, next) => {
 };
 
 app.post('/api/register', (req, res) => {
-    const { username, password, path: db_path } = req.body;
-    if (!username || !password || !db_path) {
-        return res.status(400).json({ success: false, message: "用户名、密码和路径都不能为空！" });
+    // 不再从 req.body 中获取 path
+    const { username, password } = req.body;
+    if (!username || !password) {
+        return res.status(400).json({ success: false, message: "用户名和密码都不能为空！" });
     }
+
+    // 自动在工作区内创建数据库路径
+    const workspacePath = getWorkspacePath();
+    const vaultsDir = path.join(workspacePath, 'vaults');
+    const db_path = path.join(vaultsDir, `${username}.db`);
+
     bcrypt.hash(password, SALT_ROUNDS, (err, hash) => {
         if (err) {
             return res.status(500).json({ success: false, message: "服务器内部错误" });
         }
+        // ... (后续逻辑与之前相同，使用新生成的 db_path)
         const insertUserSql = 'INSERT INTO users (username, password_hash, db_path, created_at, updated_at) VALUES (?, ?, ?, ?, ?)';
         const currentTime = new Date().toISOString();
         const params = [username, hash, db_path, currentTime, currentTime];
+        
         userDB.run(insertUserSql, params, async function(err) {
             if (err) {
                 if (err.message.includes('UNIQUE constraint failed')) {

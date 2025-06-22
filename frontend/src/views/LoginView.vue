@@ -27,6 +27,11 @@ const handleRegistrationSuccess = (successMessage) => {
   messageType.value = 'success';
   message.value = successMessage;
   showRegisterView.value = false; // 返回登录视图
+
+   // **新增代码：清空所有输入框**
+  username.value = '';
+  profilePassword.value = '';
+  password.value = '';
 };
 
 const handleLogin = async () => {
