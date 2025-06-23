@@ -1,14 +1,11 @@
-# .github/workflows/main.yml
-
 name: Build Portable Application
 
 on:
   push:
     tags:
-      - 'v*'  # 只在 push tag（如 v1.0.0）时触发
+      - 'v*'  # 只在推送 v1.0、v1.1.2 等 tag 时触发
 
 jobs:
-  # --- Windows 构建工作 ---
   build-windows:
     name: Build Windows Portable (x64)
     runs-on: windows-latest
@@ -29,16 +26,14 @@ jobs:
 
       - name: Build and package Windows application
         run: npm run package -- --win --x64
-      
-      - name: Upload Windows Artifact
-        uses: actions/upload-artifact@v4
+
+      - name: Upload Windows build to GitHub Release
+        uses: softprops/action-gh-release@v1
         with:
-          name: keyvault-windows-x64-portable
-          path: dist/*.zip
+          files: dist/*.zip
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-  # --- macOS 构建工作 ---
   build-macos:
     name: Build macOS (ARM64)
     runs-on: macos-latest
@@ -64,10 +59,9 @@ jobs:
       - name: Build and package macOS application
         run: npm run package -- --mac --arm64
 
-      - name: Upload macOS Artifact
-        uses: actions/upload-artifact@v4
+      - name: Upload macOS build to GitHub Release
+        uses: softprops/action-gh-release@v1
         with:
-          name: keyvault-macos-arm64-build
-          path: dist/*.dmg
+          files: dist/*.dmg
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}          
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
