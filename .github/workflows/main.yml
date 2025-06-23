@@ -36,6 +36,8 @@ jobs:
         with:
           name: keyvault-windows-x64-portable
           path: dist/*.zip
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
   # --- macOS 构建工作 ---
   build-macos:
@@ -68,3 +70,5 @@ jobs:
         with:
           name: keyvault-macos-arm64-build
           path: dist/*.dmg
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}          
