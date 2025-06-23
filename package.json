@@ -35,10 +35,12 @@
     "productName": "KeyVault",
     "publish": null,
     "files": [
-      "main.js",
-      "preload.js",
-      "frontend/dist/**/*",
-      "backend/src/*"
+    "main.js",
+    "preload.js",
+    "package.json",
+    "frontend/dist/**/*",
+    "backend/src/**/*",
+    "node_modules/**/*"
     ],
     "extraResources": [
       {
