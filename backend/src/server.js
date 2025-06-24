@@ -94,8 +94,8 @@ app.post('/api/register', (req, res) => {
 
     // 自动在工作区内创建数据库路径
     const workspacePath = getWorkspacePath();
-    const vaultsDir = path.join(workspacePath, 'vaults');
-    const db_path = path.join(vaultsDir, `${username}.db`);
+    const vaultsDir = path.posix.join(workspacePath, 'vaults');
+    const db_path = path.posix.join(vaultsDir, `${username}.db`);
 
     bcrypt.hash(password, SALT_ROUNDS, (err, hash) => {
         if (err) {
