@@ -30,9 +30,10 @@ function setWorkspacePath(dirPath) {
 
 // 后端服务启动函数
 function startBackend() {
-  const backendPath = app.isPackaged
-    ? path.join(process.resourcesPath, 'app.asar.unpacked/backend/src/server.js')
-    : path.join(__dirname, 'backend/src/server.js');
+  // const backendPath = app.isPackaged
+  //   ? path.join(process.resourcesPath, 'app.asar.unpacked/backend/src/server.js')
+  //   : path.join(__dirname, 'backend/src/server.js');
+  const backendPath = path.join(__dirname, 'backend/src/server.js');
   console.log(`Starting backend by requiring: ${backendPath}`);
   try {
     require(backendPath);

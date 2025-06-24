@@ -42,15 +42,6 @@
     "backend/src/**/*",
     "node_modules/**/*"
     ],
-    "extraResources": [
-      {
-        "from": "backend/",
-        "to": "app.asar.unpacked/backend",
-        "filter": [
-          "**/*"
-        ]
-      }
-    ],
     "win": {
       "target": "zip",
       "verifyUpdateCodeSignature": false
