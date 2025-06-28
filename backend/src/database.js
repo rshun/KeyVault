@@ -37,14 +37,15 @@ const userDB = new sqlite3.Database(USER_DB_SOURCE, (err) => {
 function createUserVault(dbPath) {
     return new Promise((resolve, reject) => {
         // 确保保险库文件夹存在
-        const vaultDir = path.dirname(dbPath);
+        const absoluteDbPath =  path.join(WORKSPACE_PATH, 'vaults', dbPath);
+        const vaultDir = path.dirname(absoluteDbPath);
         if (!fs.existsSync(vaultDir)) {
             fs.mkdirSync(vaultDir, { recursive: true });
         }
 
-        const vaultDb = new sqlite3.Database(dbPath, (err) => {
+        const vaultDb = new sqlite3.Database(absoluteDbPath, (err) => {
             if (err) {
-                return reject(new Error(`创建或连接用户密码库失败 at ${dbPath}: ${err.message}`));
+                return reject(new Error(`创建或连接用户密码库失败 at ${absoluteDbPath}: ${err.message}`));
             }
             const vaultTableSql = `
             CREATE TABLE IF NOT EXISTS vault_items (

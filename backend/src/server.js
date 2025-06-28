@@ -92,10 +92,7 @@ app.post('/api/register', (req, res) => {
         return res.status(400).json({ success: false, message: "用户名和密码都不能为空！" });
     }
 
-    // 自动在工作区内创建数据库路径
-    const workspacePath = getWorkspacePath();
-    const vaultsDir = path.posix.join(workspacePath, 'vaults');
-    const db_path = path.posix.join(vaultsDir, `${username}.db`);
+    const db_path = (`${username}.db`);
 
     bcrypt.hash(password, SALT_ROUNDS, (err, hash) => {
         if (err) {
@@ -150,8 +147,9 @@ app.post('/api/data', verifyToken, (req, res) => {
     if (!configPassword || !mainPassword || !db_path) {
         return res.status(400).json({ success: false, message: "缺少必要的参数或认证信息" });
     }
-
-    const vaultDb = new sqlite3.Database(db_path, (err) => {
+    
+    const absoluteDbPath =  path.join(getWorkspacePath(), 'vaults', db_path);
+    const vaultDb = new sqlite3.Database(absoluteDbPath, (err) => {
         if (err) {
             return res.status(500).json({ success: false, message: `无法打开您的密码库文件，请检查路径和文件权限。错误: ${err.message}` });
         }
@@ -199,10 +197,11 @@ app.put('/api/data/batch-update', verifyToken, (req, res) => {
         return res.status(400).json({ success: false, message: "请求格式不正确" });
     }
 
+    const absoluteDbPath =  path.join(getWorkspacePath(), 'vaults', db_path);
     // --- 修改开始 ---
     // 直接使用 sqlite3.Database 构造函数并传入一个回调函数
     // 不再使用 getUserVaultConnection
-    const vaultDb = new sqlite3.Database(db_path, (err) => {
+    const vaultDb = new sqlite3.Database(absoluteDbPath, (err) => {
         if (err) {
             return res.status(500).json({ success: false, message: `无法打开您的密码库文件。错误: ${err.message}` });
         }
@@ -295,7 +294,9 @@ app.put('/api/data/:id', verifyToken, (req, res) => {
     if (!itemData || !configPassword || !db_path) {
         return res.status(400).json({ success: false, message: "缺少必要数据或认证信息" });
     }
-    getUserVaultConnection(db_path, (err, vaultDb) => {
+    
+    const absoluteDbPath =  path.join(getWorkspacePath(), 'vaults', db_path);
+    getUserVaultConnection(absoluteDbPath, (err, vaultDb) => {
         if (err) {
             return res.status(500).json({ success: false, message: `无法打开您的密码库文件。错误: ${err.message}` });
         }
@@ -329,9 +330,10 @@ app.delete('/api/data/:id', verifyToken, (req, res) => {
         return res.status(400).json({ success: false, message: "缺少认证信息" });
     }
 
+    const absoluteDbPath =  path.join(getWorkspacePath(), 'vaults', db_path);
     // --- 修改开始 ---
     // 直接使用 sqlite3.Database 的构造函数来建立连接
-    const vaultDb = new sqlite3.Database(db_path, (err) => {
+    const vaultDb = new sqlite3.Database(absoluteDbPath, (err) => {
         if (err) {
             return res.status(500).json({ success: false, message: `无法打开您的密码库文件。错误: ${err.message}` });
         }
