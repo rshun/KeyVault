@@ -95,7 +95,7 @@ const filteredList = computed(() => {
     return passwordList.value.filter(item => {
         const webName = item.webName || '';
         const webAddr = item.webAddr || '';
-        return webName.toLowerCase().includes(lowerCaseQuery) || 
+        return webName.toLowerCase().includes(lowerCaseQuery) ||
                webAddr.toLowerCase().includes(lowerCaseQuery);
     });
 });
@@ -242,13 +242,13 @@ const handleFileImport = async (event) => { // REFACTORED
                 return;
             }
         }
-        
+
         const confirmed = await askForConfirmation(`验证通过。即将导入 ${importedData.length} 条新记录。是否继续？`);
         if (!confirmed) {
              event.target.value = '';
              return;
         }
-        
+
         const newItems = importedData.map(record => ({
             id: `new_${Date.now()}_${Math.random()}`, webName: `${record.enName || ''}${record.cnName || ''}`,
             webAddr: record.webAddr, loginName: record.userID, passwordLength: record.keyLen || '811',
@@ -272,7 +272,7 @@ const deleteItem = async (item) => { // REFACTORED
         passwordList.value.splice(index, 1);
         return;
     }
-    
+
     const confirmed = await askForConfirmation(`您确定要删除 "${item.webName}" 这条记录吗？`);
     if (confirmed) {
         try {
@@ -399,15 +399,11 @@ const logout = async () => { // REFACTORED
             </td>
             <td @click="startEditing(item, 'webName', $event)">
               <input class="inline-edit-input" v-if="editingCell?.id === item.id && editingCell?.field === 'webName'" v-model="item.webName" @blur="stopEditing('webName', item)" @keydown.enter.prevent="stopEditing('webName', item)"/>
-              <div v-else class="truncate-cell-wrapper">
-                <span>{{ item.webName }}</span>
-              </div>
+              <span v-else>{{ item.webName }}</span>
             </td>
             <td @click="startEditing(item, 'webAddr', $event)">
               <input class="inline-edit-input" v-if="editingCell?.id === item.id && editingCell?.field === 'webAddr'" v-model="item.webAddr" @blur="stopEditing('webAddr', item)" @keydown.enter.prevent="stopEditing('webAddr', item)"/>
-              <div v-else class="truncate-cell-wrapper">
-                <a :href="item.webAddr" target="_blank">{{ item.webAddr }}</a>
-              </div>
+              <a v-else :href="item.webAddr" target="_blank">{{ item.webAddr }}</a>
             </td>
             <td @click="startEditing(item, 'loginName', $event)">
                <input class="inline-edit-input" v-if="editingCell?.id === item.id && editingCell?.field === 'loginName'" v-model="item.loginName" @blur="stopEditing('loginName', item)" @keydown.enter.prevent="stopEditing('loginName', item)"/>
@@ -462,17 +458,17 @@ const logout = async () => { // REFACTORED
   display: flex; align-items: center; -webkit-app-region: no-drag; padding-right: 140px;
 }
 .table-wrapper {
-  flex-grow: 1; padding: 2rem; overflow-y: auto; overflow-x: hidden;
+  flex-grow: 1; padding: 2rem; overflow-y: auto; overflow-x: auto;
 }
 .password-table {
   width: 100%; border-collapse: collapse; background-color: var(--color-background-component);
   box-shadow: 0 1px 3px rgba(0,0,0,0.12), 0 1px 2px rgba(0,0,0,0.24);
-  table-layout: fixed;
+  table-layout: auto;
 }
 th, td {
   border: 1px solid var(--color-border); padding: 12px; text-align: left;
-  vertical-align: middle; word-break: break-all; overflow: hidden; text-overflow: ellipsis;
-  /* Make sure text color is inherited */
+  vertical-align: middle;
+  /* 移除文本截断相关的样式 */
   color: var(--color-text);
 }
 th {
@@ -536,8 +532,6 @@ th {
 .clear-clipboard-button:hover { background-color: #e0a800; }
 tbody tr:nth-child(even) { background-color: var(--table-row-even-bg); }
 tbody tr:hover { background-color: var(--color-primary-hover-bg); }
-.truncate-cell-wrapper { max-width: 250px; overflow-x: auto; white-space: nowrap; -ms-overflow-style: none; scrollbar-width: none; }
-.truncate-cell-wrapper::-webkit-scrollbar { display: none; }
 .web-icon { width: 24px; height: 24px; vertical-align: middle; }
 .password-cell { cursor: pointer; user-select: none; white-space: nowrap; }
 a { color: var(--color-text-link); text-decoration: none; }
