@@ -216,7 +216,7 @@ const addNewRow = () => {
 const handleImportClick = () => {
     fileInput.value.click();
 };
-const handleFileImport = async (event) => { // REFACTORED
+const handleFileImport = async (event) => {
     const file = event.target.files[0];
     if (!file) return;
 
@@ -265,7 +265,7 @@ const handleFileImport = async (event) => { // REFACTORED
     };
     reader.readAsText(file);
 };
-const deleteItem = async (item) => { // REFACTORED
+const deleteItem = async (item) => {
     const index = passwordList.value.findIndex(i => i.id === item.id);
     if(index === -1) return;
     if (item.isNew) {
@@ -291,7 +291,7 @@ const deleteItem = async (item) => { // REFACTORED
                 showNotification('删除失败: ' + result.message, 'error');
             }
         } catch (error) {
-            showNotification("删除记录时发生网络错误。", 'error');
+            showNotification("删除记录时发生网络错误。", "error");
         }
     }
 };
@@ -326,16 +326,31 @@ const isRowModified = (item) => {
     if (!originalItem) return false;
     return JSON.stringify(item) !== JSON.stringify(originalItem);
 };
-const logout = async () => { // REFACTORED
+const logout = async () => {
     if (hasAnyChanges.value) {
         const confirmed = await askForConfirmation("您有未保存的修改，确定要退出吗？所有未保存的修改将会丢失。");
         if (confirmed) {
+            clearClipboard(); // 在退出前清空剪贴板
             emit('logout');
         }
     } else {
+        clearClipboard(); // 在退出前清空剪贴板
         emit('logout');
     }
 }
+
+// 新增：处理退出应用的函数
+const handleQuit = async () => {
+  if (hasAnyChanges.value) {
+    const confirmed = await askForConfirmation("您有未保存的修改，确定要退出吗？所有未保存的修改将会丢失。");
+    if (!confirmed) {
+      return;
+    }
+  }
+  clearClipboard();
+  // 调用在 preload.js 中暴露的函数
+  window.electronAPI.closeApp();
+};
 </script>
 
 <template>
@@ -369,6 +384,7 @@ const logout = async () => { // REFACTORED
         <button @click="clearClipboard" class="header-button clear-clipboard-button">清空剪贴板</button>
         <input type="file" ref="fileInput" @change="handleFileImport" style="display: none" accept=".json">
         <button @click="logout" class="header-button logout-button">退出登录</button>
+        <button @click="handleQuit" class="header-button quit-button">退出</button>
       </div>
     </header>
 
@@ -468,7 +484,6 @@ const logout = async () => { // REFACTORED
 th, td {
   border: 1px solid var(--color-border); padding: 12px; text-align: left;
   vertical-align: middle;
-  /* 移除文本截断相关的样式 */
   color: var(--color-text);
 }
 th {
@@ -483,7 +498,6 @@ th {
 }
 .resize-handle:hover { background-color: #007aff80; }
 
-/* --- Notification Styles --- */
 .notification {
   position: fixed; top: 20px; left: 50%; transform: translateX(-50%);
   padding: 12px 25px; border-radius: 8px; color: #fff;
@@ -496,7 +510,6 @@ th {
 .fade-enter-active, .fade-leave-active { transition: opacity 0.5s, transform 0.5s; }
 .fade-enter-from, .fade-leave-to { opacity: 0; transform: translate(-50%, -20px); }
 
-/* --- Confirmation Modal Styles --- */
 .modal-overlay {
   position: fixed; top: 0; left: 0; width: 100%; height: 100%;
   background-color: rgba(0, 0, 0, 0.5);
@@ -520,7 +533,7 @@ th {
 .modal-button.confirm:hover { background-color: #c82333; }
 .modal-fade-enter-active, .modal-fade-leave-active { transition: opacity 0.3s ease; }
 .modal-fade-enter-from, .modal-fade-leave-to { opacity: 0; }
-/* --- Other styles --- */
+
 .filter-input { padding: 8px 12px; border-radius: 5px; border: 1px solid var(--color-border); margin-right: 1rem; font-size: 14px; background-color: var(--color-background-component); color: var(--color-text); }
 .header-button { background-color: var(--color-background-component); color: var(--color-primary); border: 1px solid var(--color-primary); padding: 8px 15px; border-radius: 5px; cursor: pointer; font-weight: bold; transition: all 0.2s ease-in-out; margin-left: 1rem; }
 .header-button:hover { background-color: var(--color-primary-hover-bg); }
@@ -530,6 +543,8 @@ th {
 .logout-button:hover { background-color: #c82333; }
 .clear-clipboard-button { background-color: #ffc107; color: #212529; border-color: #ffc107; }
 .clear-clipboard-button:hover { background-color: #e0a800; }
+.quit-button { background-color: #6c757d; color: white; border-color: #6c757d; }
+.quit-button:hover { background-color: #5a6268; }
 tbody tr:nth-child(even) { background-color: var(--table-row-even-bg); }
 tbody tr:hover { background-color: var(--color-primary-hover-bg); }
 .web-icon { width: 24px; height: 24px; vertical-align: middle; }
@@ -543,7 +558,6 @@ a:hover { text-decoration: underline; }
 .delete-button { border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer; transition: background-color 0.2s; background-color: #dc3545; color: white; margin-left: 5px; }
 .delete-button:hover { background-color: #c82333; }
 
-/* Styles for right-click context menu */
 .context-menu-separator {
   height: 1px;
   background-color: var(--color-border);

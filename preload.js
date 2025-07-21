@@ -7,5 +7,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
   // 触发“创建新工作区”的对话框
   createWorkspace: () => ipcRenderer.invoke('workspace:create'),
   // 触发“打开现有工作区”的对话框
-  openWorkspace: () => ipcRenderer.invoke('workspace:open')
+  openWorkspace: () => ipcRenderer.invoke('workspace:open'),
+  // 新增：关闭应用程序的函数
+  closeApp: () => ipcRenderer.send('app:quit')  
 });
