@@ -1,5 +1,5 @@
 <script setup>
-import { ref, defineEmits } from 'vue';
+import { ref, defineEmits, onMounted, nextTick } from 'vue'; // 新增导入 onMounted 和 nextTick
 import RegisterView from './RegisterView.vue';
 
 const emit = defineEmits(['login-success']);
@@ -7,31 +7,49 @@ const emit = defineEmits(['login-success']);
 const username = ref('');
 const profilePassword = ref('');
 const password = ref('');
-const message = ref(''); // 重命名，使其更通用
-const messageType = ref('error'); // 'success' 或 'error'
+const message = ref('');
+const messageType = ref('error'); 
 
 const showRegisterView = ref(false);
 const isProfilePasswordVisible = ref(false);
 const isMainPasswordVisible = ref(false);
 
+// --- 新增代码开始 ---
+// 1. 创建一个模板引用来访问 input 元素
+const usernameInput = ref(null);
+
+// 2. 使用 onMounted 生命周期钩子
+onMounted(() => {
+  // nextTick 确保 DOM 已经渲染完成
+  nextTick(() => {
+    // 3. 当组件挂载后，自动聚焦到用户名输入框
+    usernameInput.value?.focus();
+  });
+});
+// --- 新增代码结束 ---
+
+
 const toggleProfilePasswordVisibility = () => { isProfilePasswordVisible.value = !isProfilePasswordVisible.value; };
 const toggleMainPasswordVisibility = () => { isMainPasswordVisible.value = !isMainPasswordVisible.value; };
 
 const handleRegisterClick = () => {
-  message.value = ''; // 切换视图时清空消息
+  message.value = '';
   showRegisterView.value = true;
 };
 
-// 新增点1: 处理注册成功事件的函数
 const handleRegistrationSuccess = (successMessage) => {
   messageType.value = 'success';
   message.value = successMessage;
-  showRegisterView.value = false; // 返回登录视图
+  showRegisterView.value = false;
 
-   // **新增代码：清空所有输入框**
   username.value = '';
   profilePassword.value = '';
   password.value = '';
+
+  // 当从注册成功返回时，也聚焦到用户名输入框
+  nextTick(() => {
+    usernameInput.value?.focus();
+  });
 };
 
 const handleLogin = async () => {
